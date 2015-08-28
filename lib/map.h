@@ -12,16 +12,20 @@ class Map
    public:
       Map ();  // constructor for a new empty map
 
+      Map (const Map<keyType, valueType> & other);
+
+      Map& operator=(const Map<keyType, valueType> & rhs);
+
       ~Map (); // destructor
 
       int size () const; // returns the number of key-value pairs
 
-      void add (keyType key, valueType value); 
+      void add (const keyType & key, const valueType & value); 
       /* Adds a new association between the given key and the given value.
          If the key already has an association, it should do nothing.
       */
 
-      void remove (keyType key);
+      void remove (const keyType & key);
       /* Removes the association for the given key.
         If the key has no association, it should do nothing. */
 
@@ -44,14 +48,25 @@ class Map
       keyType nextKey(keyType key) const;
       /* returns key added after key */
 
+      void first();
+      /* advances iterator to first position*/
+
+      void next();
+      /* advacnes iterator by 1 if possible, throws NoSuchElementException otherwise*/
+
+      const keyType & getCurrentKey () const;
+
+      const valueType & getCurrentValue () const;
   private:
       /* The head and tail of the linked list you're using to store
         all the associations. */
 
-      MapItem <keyType, valueType> *head, *tail;
+      MapItem <keyType, valueType> *current, *head, *tail;
 
       /* If you like, you can add further data fields and private
         helper methods. */
+      void addToThisFrom(const Map<keyType, valueType> & other);
+      void deleteData();
 };
 
 #include "map_impl.h"

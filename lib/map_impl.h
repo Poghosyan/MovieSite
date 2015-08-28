@@ -1,11 +1,37 @@
 #include <cstddef>
 #include <iostream>
+#include <exception>
+
+struct NoSuchElementException : public std::exception
+{
+	const char* what() const throw()
+	{
+		return "End of list";
+	}
+};
 
 template <class keyType, class valueType>
 	Map<keyType, valueType>::Map()
 	{
 		head = nullptr;
 		tail = nullptr;
+	}
+
+template <class keyType, class valueType>
+	Map<keyType, valueType>::Map (const Map<keyType, valueType> & other)
+	{
+		addToThisFrom(other);
+	}
+
+template <class keyType, class valueType>
+	Map<keyType, valueType>& Map<keyType, valueType>::operator = (const Map<keyType, valueType> & rhs)
+	{
+		if(this == &rhs) return *this;
+		if(this.size() > 0)
+		{
+			deleteData();
+		}
+		addToThisFrom(rhs);
 	}
 
 template <class keyType, class valueType>
@@ -22,7 +48,7 @@ template <class keyType, class valueType>
 	}	
 
 template <class keyType, class valueType>
-	void Map<keyType, valueType>::add(keyType key, valueType value)
+	void Map<keyType, valueType>::add(const keyType & key,const valueType & value)
 	{
 		bool hasKey = false;
 		this->get(key, hasKey);
@@ -51,7 +77,7 @@ template <class keyType, class valueType>
 	}
 
 template <class keyType, class valueType>
-	void Map<keyType, valueType>::remove (keyType key)
+	void Map<keyType, valueType>::remove (const keyType & key)
 	{
 		bool hasKey = false;
 		this->get(key, hasKey);
@@ -66,8 +92,9 @@ template <class keyType, class valueType>
 			curr = curr->next;
 		}
 		if(curr == head )
-			if(curr->next != nullptr)
-				head = curr->next;
+			head = curr->next;
+		if(curr == tail)
+			tail = curr->next;
 		delete curr;
 	}
 
@@ -114,7 +141,6 @@ template <class keyType, class valueType>
 	keyType Map<keyType, valueType>::nextKey(keyType key) const
 	{
 		bool success = false;
-		keyType pass_back;
 		MapItem<keyType, valueType> *curr = head;
 		if(tail->key != key)
 		{
@@ -126,6 +152,36 @@ template <class keyType, class valueType>
 		}
 		else
 			return tail->key;
+	}
+
+template <class keyType, class valueType>
+	void  Map<keyType, valueType>::first()
+	{
+		if(this->size() == 0)
+			throw NoSuchElementException();
+		current = head;
+	}
+
+template <class keyType, class valueType>
+	void  Map<keyType, valueType>::next()
+	{
+		if(current == tail)
+			throw NoSuchElementException();
+		current = current->next;
+	}
+
+template <class keyType, class valueType>
+	const keyType &  Map<keyType, valueType>::getCurrentKey () const
+	{
+		if(current != nullptr)
+			return current->key;
+	}
+
+template <class keyType, class valueType>
+	const valueType &  Map<keyType, valueType>::getCurrentValue () const
+	{
+		if(current != nullptr)
+			return current->value;
 	}
 
 template <class keyType, class valueType>
@@ -152,13 +208,40 @@ template <class keyType, class valueType>
 template <class keyType, class valueType>
 	Map<keyType, valueType>::~Map()
 	{
-		MapItem<keyType, valueType> *temp, *curr = head;
-		while(curr != tail)
+		deleteData();
+	}
+
+template <class keyType, class valueType>
+	void Map<keyType, valueType>::deleteData()
+	{
+		if(this->size() > 0)
 		{
-			temp = curr;
-			curr = curr->next;
-			delete temp;
+			MapItem<keyType, valueType> *temp, *curr = head;
+			while(curr != tail)
+			{
+				temp = curr;
+				curr = curr->next;
+				delete temp;
+			}
+
+			delete tail;
+		}
+	}
+
+
+template <class keyType, class valueType>
+	void Map<keyType, valueType>::addToThisFrom(const Map<keyType, valueType> & other)
+	{
+		bool hasIt = false;
+		valueType val;
+		keyType curr = other.begin();
+		while(curr != other.end())
+		{
+			val = other.get(curr, hasIt);
+			this->add(curr, val);
+			curr = other.nextKey(curr);
 		}
 
-		delete tail;
+		val = other.get(curr, hasIt);
+		this->add(curr, val);
 	}
