@@ -27,7 +27,7 @@ template <class keyType, class valueType>
 	Map<keyType, valueType>& Map<keyType, valueType>::operator = (const Map<keyType, valueType> & rhs)
 	{
 		if(this == &rhs) return *this;
-		if(this.size() > 0)
+		if(this->size() > 0)
 		{
 			deleteData();
 		}
@@ -50,38 +50,40 @@ template <class keyType, class valueType>
 template <class keyType, class valueType>
 	void Map<keyType, valueType>::add(const keyType & key,const valueType & value)
 	{
-		bool hasKey = false;
-		this->get(key, hasKey);
-		if(hasKey)
+		try
 		{
-			return;
+			this->get(key);
+		}
+		catch(NoSuchElementException & e)
+		{
+			if(head == nullptr)
+			{
+				head = new MapItem<keyType, valueType>();
+				tail = head;
+				head->key = key;
+				head->value = value;
+				head->prev = nullptr;
+				head->next = nullptr;
+			}
+			else
+			{
+				tail->next = new MapItem<keyType, valueType>();
+				tail->next->prev = tail;
+				tail->next->key = key;
+				tail->next->value = value;
+				tail = tail->next;
+			}
 		}	
-
-		if(head == nullptr)
-		{
-			head = new MapItem<keyType, valueType>();
-			tail = head;
-			head->key = key;
-			head->value = value;
-			head->prev = nullptr;
-			head->next = nullptr;
-		}
-		else
-		{
-			tail->next = new MapItem<keyType, valueType>();
-			tail->next->prev = tail;
-			tail->next->key = key;
-			tail->next->value = value;
-			tail = tail->next;
-		}
 	}
 
 template <class keyType, class valueType>
 	void Map<keyType, valueType>::remove (const keyType & key)
 	{
-		bool hasKey = false;
-		this->get(key, hasKey);
-		if(!hasKey)
+		try
+		{
+			this->get(key);
+		}
+		catch(NoSuchElementException & e)
 		{
 			return;
 		}
@@ -99,13 +101,11 @@ template <class keyType, class valueType>
 	}
 
 template <class keyType, class valueType>
-	valueType Map<keyType, valueType>::get (keyType key, bool & success) const
+	const valueType & Map<keyType, valueType>::get (const keyType & key) const
 	{
 		if(this->size() == 0)
 		{
-			success = false;
-			valueType v;
-			return v;
+			throw NoSuchElementException();
 		}
 
 		MapItem<keyType, valueType> *curr = head;
@@ -116,31 +116,33 @@ template <class keyType, class valueType>
 
 		if(curr->key == key)
 		{
-			success = true;
 			return curr->value;
 		}
 
-		success = false;
-		valueType v;
-		return v;
+		throw NoSuchElementException();
 	}
 
 template <class keyType, class valueType>
 	keyType Map<keyType, valueType>::begin() const
 	{
+		if(head == nullptr)
+		{
+			throw NoSuchElementException();
+		}
 		return head->key;
 	}
 
 template <class keyType, class valueType>
 	keyType Map<keyType, valueType>::end() const
 	{
+		if(tail == nullptr)
+			throw NoSuchElementException();
 		return tail->key;
 	}
 
 template <class keyType, class valueType>
-	keyType Map<keyType, valueType>::nextKey(keyType key) const
+	keyType Map<keyType, valueType>::nextKey(keyType& key) const
 	{
-		bool success = false;
 		MapItem<keyType, valueType> *curr = head;
 		if(tail->key != key)
 		{
@@ -187,7 +189,6 @@ template <class keyType, class valueType>
 template <class keyType, class valueType>
 	void  Map<keyType, valueType>::merge(const Map<keyType, valueType> & other)
 	{
-		bool hasKey = false;
 		bool keepGoing = true;
 		keyType current = other.begin();
 		do
@@ -195,11 +196,13 @@ template <class keyType, class valueType>
 			if(current == other.end())
 				keepGoing = false;
 
-			this->get(current, hasKey);
-			if(!hasKey)
+			try
 			{
-				bool gotIt = false;
-				this->add(current, other.get(current, gotIt));
+				this->get(current);
+			}	
+			catch(NoSuchElementException & e)
+			{
+				this->add(current, other.get(current));
 			}
 			current = other.nextKey(current);
 		}while(!(current == other.end() && !keepGoing));
@@ -232,16 +235,28 @@ template <class keyType, class valueType>
 template <class keyType, class valueType>
 	void Map<keyType, valueType>::addToThisFrom(const Map<keyType, valueType> & other)
 	{
-		bool hasIt = false;
 		valueType val;
-		keyType curr = other.begin();
-		while(curr != other.end())
+		try
 		{
-			val = other.get(curr, hasIt);
-			this->add(curr, val);
-			curr = other.nextKey(curr);
-		}
+			keyType curr = other.begin();
+			std::cout << "Here" << std::endl;
 
-		val = other.get(curr, hasIt);
-		this->add(curr, val);
+			while(curr != other.end())
+			{
+				try
+				{
+					val = other.get(curr);
+				}
+				catch(NoSuchElementException & e){}
+				this->add(curr, val);
+				curr = other.nextKey(curr);
+			}
+			try
+			{
+				val = other.get(curr);
+			}	
+			catch(NoSuchElementException & e){}
+			this->add(curr, val);
+		}
+		catch(NoSuchElementException & e) {}
 	}

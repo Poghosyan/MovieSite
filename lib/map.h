@@ -29,7 +29,7 @@ class Map
       /* Removes the association for the given key.
         If the key has no association, it should do nothing. */
 
-      valueType get (keyType key, bool & success) const;
+      const valueType & get (const keyType & key) const;
       /* Returns the value associated with the given key.
         If the key existed in the map, success should be set to true.
         If the key has no association, it should set success to false. */
@@ -45,7 +45,7 @@ class Map
       keyType end() const;
       /* returns last key added */
 
-      keyType nextKey(keyType key) const;
+      keyType nextKey(keyType& key) const;
       /* returns key added after key */
 
       void first();
