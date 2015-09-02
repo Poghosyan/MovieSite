@@ -49,7 +49,7 @@ class Map
       /* returns key added after key */
 
       void first();
-      /* advances iterator to first position*/
+      /* advances iterator to first position, throws NoSuchElementException otherwise*/
 
       void next();
       /* advacnes iterator by 1 if possible, throws NoSuchElementException otherwise*/
