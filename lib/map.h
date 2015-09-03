@@ -1,3 +1,5 @@
+#pragma once
+
 template <class keyType, class valueType>
 struct MapItem
 {

@@ -11,9 +11,9 @@ template <class T>
     }
 
 template <class T>
-    Set<T>& Set<T>::operator = (const Set<T>& rhs)
+    Set<T>& Set<T>::operator = (const Set<T> & rhs)
     {
-        if(this == rhs) { return *this; }
+        if(this == &rhs) return *this;
         if(this->size() > 0)
         {
             T temp, item = this->begin();
@@ -27,6 +27,7 @@ template <class T>
         }
 
         this->addToThisFrom(rhs);
+        return *this;
     }
 
 template <class T>

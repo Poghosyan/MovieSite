@@ -32,6 +32,7 @@ template <class keyType, class valueType>
 			deleteData();
 		}
 		addToThisFrom(rhs);
+		return *this;
 	}
 
 template <class keyType, class valueType>
