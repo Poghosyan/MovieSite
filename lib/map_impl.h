@@ -56,7 +56,7 @@ template <class keyType, class valueType>
 			this->get(key);
 		}
 		catch(NoSuchElementException & e)
-		{
+		{	
 			if(head == nullptr)
 			{
 				head = new MapItem<keyType, valueType>();
@@ -74,7 +74,9 @@ template <class keyType, class valueType>
 				tail->next->value = value;
 				tail = tail->next;
 			}
-		}	
+		}
+
+		//std::cout << "Never got to add" << std::endl;	
 	}
 
 template <class keyType, class valueType>
