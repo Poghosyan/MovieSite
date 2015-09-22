@@ -1,5 +1,8 @@
 #pragma once
 #include "map.h"
+#include "pair.h"
+#include "mergesort.h"
+#include <vector>
 
 template <class T>
 class Set
@@ -38,16 +41,6 @@ class Set
     Set<T> setIntersection (const Set<T> & other) const;
     // Returns the intersection of this and other. Does not alter this.
 
-    T begin () const;
-
-    T end () const;
-
-    T nextKey (T& other) const;
-
-    void first();
-
-    void next();
-
     const T & getCurrentKey();
 
   private:
@@ -60,7 +53,44 @@ class Set
      /* If you like, you can add further data fields and private
         helper methods. */
     void addToThisFrom(const Set<T> & other);
-    void addAllFromTo(const Set<T> & from, const Set<T> & to) const;
+
+  public:
+    class Iterator {
+      private: 
+        const Set<T> *whoIBelongTo;
+        typename Map<T, T>::Iterator activeIt;
+        Iterator (const Set<T> *s,  typename Map<T, T>::Iterator &);
+
+      public:
+        friend class Set<T>;
+        T operator* () const;
+        // return the item the iterator is at
+
+        Set<T>::Iterator operator++ ();
+        // advances the iterator (pre-increment)
+
+        Set<T>::Iterator operator= (const Set<T>::Iterator & other);
+        // assigns the other iterator to this iterator and returns this
+
+        bool operator== (const Set<T>::Iterator & other) const;
+        // returns whether this iterator is equal to the other iterator
+
+        bool operator!= (const Set<T>::Iterator & other) const;
+        // returns whether this iterator is not equal to the other iterator
+
+        /* Optionally, if you think that it makes your code easier to write,
+        you may also overload other operators: */
+
+        /* You may define a public copy constructor and/or default constructor
+        if you think it would be helpful. */
+    };
+
+     Set<T>::Iterator begin () const;
+       // returns an iterator initialized to the first element
+
+     Set<T>::Iterator end () const;
+       /* returns an iterator initialized past the last element,
+          to designate that the end of the map has been reached. */
 };
 
-#include "set_impl.h"
+#include "set_impl.hpp"

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pair.h"
+
 template <class keyType, class valueType>
 struct MapItem
 {
@@ -41,21 +43,6 @@ class Map
         If both maps (this and other) contain an association for the same
         key, then the one of this is used. */
 
-      keyType begin() const;
-      /* returns first key added */
-
-      keyType end() const;
-      /* returns last key added */
-
-      keyType nextKey(keyType& key) const;
-      /* returns key added after key */
-
-      void first();
-      /* advances iterator to first position, throws NoSuchElementException otherwise*/
-
-      void next();
-      /* advacnes iterator by 1 if possible, throws NoSuchElementException otherwise*/
-
       const keyType & getCurrentKey () const;
 
       const valueType & getCurrentValue () const;
@@ -69,7 +56,49 @@ class Map
         helper methods. */
       void addToThisFrom(const Map<keyType, valueType> & other);
       void deleteData();
+
+  public:
+    class Iterator {
+    /* add any constructors that you feel will be helpful,
+      and choose whether to make them public or private. */
+    private:
+      const Map<keyType, valueType> *whoIBelongTo;
+      MapItem<keyType, valueType> *activeIndex;
+
+      Iterator(const Map<keyType, valueType> *s, MapItem<keyType,valueType> *p);
+
+    public:
+      friend class Map<keyType, valueType>;
+      Iterator();
+      Pair<keyType, valueType> operator* () const;
+          // return the current (key, value) pair the iterator is at
+
+      Map<keyType, valueType>::Iterator operator++ ();
+          // advances the iterator (pre-increment)
+
+      Map<keyType, valueType>::Iterator operator= (const Map<keyType,valueType>::Iterator & other);
+          // assigns the other iterator to this iterator and returns this
+
+      bool operator== (const Map<keyType,valueType>::Iterator & other) const;
+      // returns whether this iterator is equal to the other iterator
+
+      bool operator!= (const Map<keyType,valueType>::Iterator & other) const;
+      // returns whether this iterator is not equal to the other iterator
+
+      /* Optionally, if you think that it makes your code easier to write,
+      you may also overload other operators: */
+
+      /* You may define a public copy constructor and/or default constructor
+      if you think it would be helpful. */
+  };
+
+      Iterator begin () const;
+       // returns an iterator initialized to the first element
+
+      Iterator end () const;
+       /* returns an iterator initialized past the last element,
+          to designate that the end of the map has been reached. */
 };
 
-#include "map_impl.h"
+#include "map_impl.hpp"
 

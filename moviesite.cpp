@@ -43,6 +43,11 @@ int main (int argc, char * argv[]) {
 	while (stop) {
 		stop = executeMenu1 (&users, &movies, &keywordIndex);
 	}
+	//Add new users here.
+	std::ofstream outfile (userFile.c_str());
+	if (outfile.is_open ()) {
+
+	}
 }
 
 
@@ -105,34 +110,19 @@ void mapMovieToKeyword (Map <std::string, Movie*> & movies, Map <std::string, Se
 	Movie * curr;
 	Set <std::string> currKeywords;
 	Set <Movie*>* currMovieSet;
-	try {
-		movies.first ();
-	} catch (NoSuchElementException & e) { 
-		std::cout << "No movies to search." << std::endl;
-		return;
-	}
 
-	for (;;) {
-		curr = movies.getCurrentValue ();
+	for (Map <std::string, Movie*>::Iterator it = movies.begin(); it != movies.end(); ++it) {
+		curr = (*it).second;
 		currKeywords = curr->getAllKeywords ();
-		try {
-			currKeywords.first ();
-			for (;;) {
-				try {
-					currMovieSet = keyMap.get(currKeywords.getCurrentKey ());
-					currMovieSet->add(curr);
-				} catch (NoSuchElementException & e) {
-					currMovieSet = new Set <Movie*>();
-					currMovieSet->add(curr);
-					keyMap.add(currKeywords.getCurrentKey (), currMovieSet);
-				}
-				currKeywords.next();
+		for (Set<std::string>::Iterator iter = currKeywords.begin(); iter != currKeywords.end(); ++iter) {
+			try {
+				currMovieSet = keyMap.get(*iter);
+				currMovieSet->add(curr);
+			} catch (NoSuchElementException & e) {
+				currMovieSet = new Set <Movie*>();
+				currMovieSet->add(curr);
+				keyMap.add(*iter, currMovieSet);
 			}
-		} catch (NoSuchElementException & e) { }
-		try {
-			movies.next ();
-		} catch (NoSuchElementException & e) { 
-			break;
 		}
 	}
 }
@@ -245,23 +235,18 @@ bool executeMenu2 (Map <std::string, Movie*> *movies , Map <std::string, Set <Mo
 void executeMenu3 (Set <Movie*>* & movies) {
 	int input;
 	std::cout << "There are " << movies->size() << " movies." << std::endl;
-	try { movies->first (); }
-	catch (NoSuchElementException & e) {
-		std::cout << "No movies to display" << std::endl;
-		return;
-	}
-	for (;;) {
-		displayMovie (movies->getCurrentKey ());
+	Set <Movie *>::Iterator it = movies->begin();
+	if(it == movies->end())
+		std::cout << "No movies found" << std::endl;
+	while (it != movies->end()) {
+		displayMovie (*it);
 		if (movies->size() > 1)
-			std::cout << "1. Next movie" << std::endl;
+		{	std::cout << "1. Next movie" << std::endl; }
 		std::cout << "2. Return to menu" << std::endl;
 		input = getInput ();
 		switch (input) {
 			case 1:
-				try { movies->next (); }
-				catch (NoSuchElementException & e) {
-					return;
-				}
+				++it;
 				break;
 			case 2:
 				return;
@@ -274,17 +259,12 @@ void executeMenu3 (Set <Movie*>* & movies) {
 
 void displayMovie (Movie * mov) {
 	Set<std::string> keywords = mov->getAllKeywords ();
-	std::cout << mov->getTitle () << std::endl;
-	try { keywords.first(); }
-	catch (NoSuchElementException & E) {
+	Set<std::string>::Iterator iter = keywords.begin();
+	if(iter == keywords.end())
 		std::cout << "Movie not found" << std::endl;
-		return;
-	} 
-	for (;;) {
+
+	while (iter != keywords.end()) {
 		std::cout << keywords.getCurrentKey () << std::endl;
-		try { keywords.next (); }
-		catch (NoSuchElementException & E) {
-			break;
-		}
+		++iter;
 	}
 }
