@@ -21,6 +21,23 @@ std::string User::getName () const {
 	return m_name;
 }
 
+Queue<Movie*> * User::movieQueue () {
+	return movieQ;
+}
+
+void User::rentMovie (Movie *m) {
+	if (movie == nullptr)
+		movie = m;
+}
+
+void User::returnMovie () {
+	movie = nullptr;
+}
+
+Movie* User::currentMovie () {
+	return movie;
+}
+
 User::~User () {
 
 }
