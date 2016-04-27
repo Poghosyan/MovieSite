@@ -7,20 +7,25 @@
 #include <sstream>
 #include <limits>
 
+enum menuNavCommand {MAIN, LOGGEDIN, DISPLAY, QUEUE, EXIT};
+
 void getUserRecords (const std::string & fileName, Map <std::string, User*> &);
 void getMovieRecords (const std::string & fileName, Map <std::string, Movie*> &);
 void mapMovieToKeyword (Map <std::string, Movie*> &, Map <std::string, Set <Movie*>*> &);
 void displayLogin ();
 void displayCommands ();
 int getInput ();
-bool executeMenu1 (Map <std::string, User*> *, Map <std::string, Movie*> *, Map <std::string, Set <Movie*>*> *);
-bool executeMenu2 (Map <std::string, Movie*> *, Map <std::string, Set <Movie*>*> *);
-void executeMenu3 (Set <Movie*>* &);
+menuNavCommand MainMenu (Map <std::string, User*> *, Map <std::string, Movie*> *, Map <std::string, Set <Movie*>*> *, User * curr);
+menuNavCommand LoggedInMenu (Map <std::string, Movie*> *, Map <std::string, Set <Movie*>*> *, User * curr);
+void ViewingMovMenu (Set <Movie*>* &, User * curr);
 void displayMovie (Movie * mov);
 
 int main (int argc, char * argv[]) {
 	bool stop = true;
+	//menuNavCommand instr = menuNavCommand::MAIN;
+	std::string nextStep("MainMenu");
 	std::string userFile, mediaFile;
+	User * current = nullptr;
 	Map <std::string, User*> users;
 	Map <std::string, Movie*> movies;
 	Map <std::string, Set <Movie*>*> keywordIndex;
@@ -41,13 +46,14 @@ int main (int argc, char * argv[]) {
 	mapMovieToKeyword (movies, keywordIndex);
 
 	while (stop) {
-		stop = executeMenu1 (&users, &movies, &keywordIndex);
+		stop = MainMenu (&users, &movies, &keywordIndex, current);
 	}
 	//Add new users here.
 	std::ofstream outfile (userFile.c_str());
 	if (outfile.is_open ()) {
 
 	}
+	outfile.close();
 }
 
 
@@ -136,7 +142,9 @@ void displayLogin () {
 void displayCommands () {
 	std::cout << "1. Search for a movie by title" << std::endl;
 	std::cout << "2. Search for a movie by keyword" << std::endl;
-	std::cout << "3. Logout" << std::endl;
+	std::cout << "3. Return current movie" << std::endl;
+	std::cout << "4. View Queue" << std::endl;
+	std::cout << "5. Logout" << std::endl;
 }
 
 int getInput () {
@@ -154,26 +162,30 @@ int getInput () {
 	return input;
 }
 
-bool executeMenu1 (Map <std::string, User*> *users, Map <std::string, Movie*> *movies, Map <std::string, Set <Movie*>*> *keywordIndex) {
+menuNavCommand MainMenu (Map <std::string, User*> *users, Map <std::string, Movie*> *movies, Map <std::string, Set <Movie*>*> *keywordIndex, User * curr) {
 	int input;
 	std::string id, name;
 	User *newUser;
+
 	displayLogin ();
 	input = getInput ();
+
 	switch (input) {
 		case 1:
 			std::cout << "Please enter User ID" << std::endl;
 			std::getline (std::cin, id);
-			try { users->get(id); }
+
+			try { curr = users->get(id); }
 			catch (NoSuchElementException & e) { 
 				std::cout << "No user with that user ID exists" << std::endl;
-				return true;
+				return menuNavCommand::MAIN;
 			}
-			return executeMenu2 (movies, keywordIndex);
+			return menuNavCommand::LOGGEDIN;
 		case 2:
 			for (;;) {
 				std::cout << "Enter preferred user id" << std::endl;
 				std::getline (std::cin, id);
+
 				try { users->get (id); }
 				catch (NoSuchElementException & e) {
 					std::cout << "Enter preferred user name" << std::endl;
@@ -181,80 +193,118 @@ bool executeMenu1 (Map <std::string, User*> *users, Map <std::string, Movie*> *m
 					newUser = new User(id, name);
 					users->add (id, newUser);
 					std::cout << "New User created" << std::endl;
-					break;
+					return menuNavCommand::MAIN;
 				}
 				std::cout << "The user ID you enetered already exists." << std::endl;
 			}
-			return true;
 		case 3:
-			return false;
+			return menuNavCommand::EXIT;
 		default:
 			std::cout << "You did not choose one of 3 options, please enter 1, 2 or 3" << std::endl;			
-			return true;
+			return menuNavCommand::MAIN;
 	}
 }
 
-bool executeMenu2 (Map <std::string, Movie*> *movies , Map <std::string, Set <Movie*>*> *keywordIndex) {
+menuNavCommand LoggedInMenu (Map <std::string, Movie*> *movies , Map <std::string, Set <Movie*>*> *keywordIndex, User * curr) {
 	int input;
 	std::string id;
 	Movie* currMovie;
 	Set <Movie*>* moviesFound;
-	for (;;) {
-		displayCommands ();
-		input = getInput ();
-		switch (input) {
-			case 1:
-				std::cout << "Please enter title of movie" << std::endl;
-				std::getline (std::cin, id);
-				try { currMovie = movies->get(id); }
-				catch (NoSuchElementException & e) { 
-					std::cout << "No movie with that title in database" << std::endl;
-					break;
-				}
-				displayMovie (currMovie);
-				break;
-			case 2:
-				std::cout << "Please enter a keyword" << std::endl;
-				std::getline (std::cin, id);
-				try { moviesFound = keywordIndex->get(id); }
-				catch (NoSuchElementException & e) {
-					std::cout << "No match" << std::endl;
-					break;
-				}
-				executeMenu3 (moviesFound);
-				break;
-			case 3:
-				return true;
-			default:
-				std::cout << "You did not choose one of 3 options, please enter 1, 2 or 3" << std::endl;
-				break;
-		}
+	displayCommands ();
+	input = getInput ();
+	switch (input) {
+		case 1:
+			std::cout << "Please enter title of movie" << std::endl;
+			std::getline (std::cin, id);
+			try { currMovie = movies->get(id); }
+			catch (NoSuchElementException & e) { 
+				std::cout << "No movie with that title in database" << std::endl;
+				return menuNavCommand::LOGGEDIN;
+			}
+			displayMovie (currMovie);
+			return menuNavCommand::LOGGEDIN;
+		case 2:
+			std::cout << "Please enter a keyword" << std::endl;
+			std::getline (std::cin, id);
+			try { moviesFound = keywordIndex->get(id); }
+			catch (NoSuchElementException & e) {
+				std::cout << "No match" << std::endl;
+				return menuNavCommand::LOGGEDIN;
+			}
+			ViewingMovMenu (moviesFound, curr);
+			return menuNavCommand::LOGGEDIN;
+		case 3:
+			curr->returnMovie();
+			break;
+		case 4:
+			return menuNavCommand::QUEUE;
+		case 5:
+			curr = nullptr;
+			return menuNavCommand::MAIN;
+		default:
+			std::cout << "You did not choose one of 5 options, please enter 1, 2, 3, 4 or 5" << std::endl;
+			return menuNavCommand::LOGGEDIN;
 	}
 }
 
-void executeMenu3 (Set <Movie*>* & movies) {
+void ViewingMovMenu (Set <Movie*>* & movies, User * curr) {
 	int input;
 	std::cout << "There are " << movies->size() << " movies." << std::endl;
 	Set <Movie *>::Iterator it = movies->begin();
+
 	if(it == movies->end())
 		std::cout << "No movies found" << std::endl;
+
 	while (it != movies->end()) {
 		displayMovie (*it);
+		
 		if (movies->size() > 1)
-		{	std::cout << "1. Next movie" << std::endl; }
-		std::cout << "2. Return to menu" << std::endl;
+			std::cout << "1. Next movie" << std::endl; 
+
+		std::cout << "2. Add movie to queue" << std::endl;
+		std::cout << "3. Return to menu" << std::endl;
 		input = getInput ();
 		switch (input) {
 			case 1:
-				++it;
+				if(movies->size() > 1)
+					++it;
+				else
+					std::cout << "Please choose one of the following options" << std::endl;
 				break;
 			case 2:
+				curr->movieQueue()->enqueue(*it);
+				break;
+			case 3:
 				return;
 			default:
 				std::cout << "You did not choose one of 3 options, please enter 1, or 2" << std::endl;
 				break;	
 		}
 	}	
+}
+
+menuNavCommand viewQueue (User * curr) {
+	int input;
+	std::cout << "1. Order movie" << std::endl;
+	std::cout << "2. Remove movie from queue" << std::endl;
+	std::cout << "3. Move movie back to queue" << std::endl;
+	std::cout << "4. Return to user menu" << std::endl;
+
+	input = getInput ();
+	switch (input) {
+		case 1:
+			break;
+		case 2:
+			break;
+		case 3:
+			break;
+		case 4:
+			break;
+		default:
+			std::cout << "You did not choose a valid option" <<std::endl;
+			return menuNavCommand::QUEUE;
+	}
+
 }
 
 void displayMovie (Movie * mov) {
